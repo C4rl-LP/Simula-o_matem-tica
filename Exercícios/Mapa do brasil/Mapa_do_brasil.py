@@ -84,7 +84,7 @@ N = np.cross(r_rj, r_bb)
 
 
 
-teta_geo =  
+teta_geo =   
 
 phi_geo = 
 
