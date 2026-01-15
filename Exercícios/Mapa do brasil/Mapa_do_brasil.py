@@ -59,7 +59,7 @@ teta_bb = lon_bb * np.pi/ 180
 x_rj_bb, y_rj_bb, z_rj_bb = esfe_cart(np.array([phi_rj, phi_bb]), np.array([teta_rj, teta_bb]), r)
 
 #----------------------------------------------------------------------
-#----------- Laxodroma brisbane ao rio --------------------------------
+#----------- Laxodromia brisbane ao rio -------------------------------
 #----------------------------------------------------------------------
 
 x_merc_rj, y_merc_rj = projeção_mercator(phi_rj, teta_rj)
@@ -80,13 +80,33 @@ x_laxo_esf, y_laxo_esf, z_laxo_esf = esfe_cart(phi_laxo, teta_laxo, r)
 r_rj = np.array([x_rj_bb[0], y_rj_bb[0], z_rj_bb[0]])
 r_bb = np.array([x_rj_bb[1], y_rj_bb[1], z_rj_bb[1]])
 
-N = np.cross(r_rj, r_bb)
 
 
+""" Aqui vou parametrizar a geodésica da segunite forma:
+        * Determinar apartir do produto interno o angulo entre vetores p1 e p2 tal que p1, p2 são os 
+        vetores posição da localidade em relação ao centro da esfera.
+        * Em seguida vamos escolher um vetor unitário u tal que u.p1 =1, u = p1/|p1| = p1/r. agora vamos usar
+        p2 para constuir v tal que v.u = 0. Vamos tomar v = p2 - (p2.u)u/ | p2 - (p2.u)u |
+        * Agora resta parmetrizar a curva usando a base u e v:
+            curva(t) = R(u cos(t) + v sin(t)) t vai de 0 até o angulo entre os dois pontos Thet
+        cos (Thet) = u.v
 
-teta_geo =   
+"""
+u = r_rj / np.linalg.norm(r_rj)
+proj = np.dot(r_bb, u) * u
+v = r_bb - proj
+v = v / np.linalg.norm(v)
 
-phi_geo = 
+Theta = np.arccos(np.dot(u, r_bb))/np.linalg.norm(r_bb)
+
+def geodesica(t):
+    return u*np.cos(t) + v*np.sin(t)
+
+t_vals = np.linspace(0, Theta, 200)
+curve = np.array([geodesica(t) for t in t_vals])
+
+x_geo, y_geo, z_geo = curve[:,0], curve[:,1], curve[:,2]
+
 
 #----------------------------------------------------------------------
 #----------- Plot em 3D -----------------------------------------------
@@ -99,8 +119,15 @@ fig = go.Figure(data=[
                  marker=dict(size=1, color='red')),
     go.Scatter3d(x= x_rj_bb, y= y_rj_bb, z= z_rj_bb,mode='markers',
                  marker=dict(size=5, color='green')),
-    go.Scatter3d(x= x_laxo_esf, y= y_laxo_esf, z= z_laxo_esf,mode='markers',
-                 marker=dict(size=5, color='green'))
+    go.Scatter3d(x= x_laxo_esf, y= y_laxo_esf, z= z_laxo_esf,mode='lines',
+                  line=dict(color='blue', width=6),
+        name='Laxodromia'),
+    go.Scatter3d(
+        x=x_geo, y=y_geo, z=z_geo,
+        mode='lines',
+        line=dict(color='black', width=6),
+        name='Geodésica'
+    )
     
 ])
 
@@ -123,23 +150,16 @@ fig.show()
 #Brasil!!
 'Plotar retas delimitando o mapa'
 plt.figure(figsize=(8,6))
-teta_esq = -np.pi
-
-teta_dir =  np.pi
-
-phi_min = -np.deg2rad(85)
-phi_max =  np.deg2rad(85)
-
-
-
-x_esq, y_sup = projeção_mercator(phi_max, teta_esq)
-x_dir, y_inf = projeção_mercator(phi_min, teta_dir)
-
 
 plt.plot(x_laxo, y_laxo)
 
-plt.scatter(projeção_mercator(phi_bra, teta_bra)[0], projeção_mercator(phi_bra, teta_bra)[1],s=1)
+plt.scatter(
+    projeção_mercator(phi_bra, teta_bra)[0],
+    projeção_mercator(phi_bra, teta_bra)[1],
+    s=1
+)
+
+plt.gca().set_aspect('equal', adjustable='box')  # <<< ESSENCIAL
 plt.grid()
 plt.show()
-
         
